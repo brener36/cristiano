@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🎮 Desafio Tema 03 • 20 Questões Gamificadas</title>
+<style>
+:root{
+  --bg:#080d1a; --surface:#121a2d; --surface-card:#18243c; --surface-hover:#223252;
+  --primary:#38bdf8; --primary-dark:#0284c7; --accent:#f59e0b; --accent-orange:#ea580c;
+  --purple:#8b5cf6; --pink:#ec4899; --ok:#10b981; --ok-bg:#064e3b; --ok-text:#ecfdf5;
+  --no:#ef4444; --no-bg:#450a0a; --no-text:#fef2f2;
+  --text:#f8fafc; --text-muted:#cbd5e1; --border:#2a3854; --border-focus:#38bdf8;
+  --radius:16px; --trans:all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;
+  background:radial-gradient(circle at 10% 10%,#1e1b4b 0%,var(--bg) 65%);
+  color:var(--text);min-height:100vh;padding:20px 14px 80px;line-height:1.6;}
+.container{max-width:960px;margin:0 auto;}
+.hud-header{background:#0f172a;border:2px solid var(--border);border-radius:var(--radius);
+  padding:20px 24px;margin-bottom:20px;box-shadow:0 10px 30px rgba(0,0,0,0.5);
+  position:sticky;top:10px;z-index:100;}
+.hud-top{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;}
+.hud-title h1{font-size:1.35rem;font-weight:900;color:#fff;display:flex;align-items:center;gap:8px;}
+.hud-title h1 span{color:var(--primary);}
+.hud-title p{font-size:0.84rem;color:var(--text-muted);}
+.stats-bar{display:flex;gap:10px;align-items:center;}
+.stat-chip{background:#1e293b;border:1px solid var(--border);padding:6px 14px;border-radius:30px;font-size:0.82rem;font-weight:800;}
+.stat-chip.score{color:#fbbf24;border-color:rgba(251,191,36,0.5);}
+.stat-chip.streak{color:#f472b6;border-color:rgba(244,114,182,0.5);}
+.hud-progress{margin-top:14px;}
+.progress-meta{display:flex;justify-content:space-between;font-size:0.78rem;font-weight:700;color:var(--text-muted);margin-bottom:6px;}
+.progress-track{height:10px;background:#090e17;border-radius:20px;overflow:hidden;border:1px solid var(--border);}
+.progress-fill{height:100%;width:0%;background:linear-gradient(90deg,var(--primary),var(--purple),var(--pink));transition:width 0.3s ease;}
+.nav-dots{display:flex;gap:6px;overflow-x:auto;padding:8px 2px 14px;margin-bottom:18px;scrollbar-width:thin;}
+.nav-dot{width:30px;height:30px;border-radius:50%;background:#1e293b;border:2px solid var(--border);color:#cbd5e1;font-size:0.72rem;font-weight:800;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:var(--trans);}
+.nav-dot:hover{border-color:var(--primary);color:#fff;}
+.nav-dot.active{background:var(--primary-dark);color:#fff;border-color:#7dd3fc;box-shadow:0 0 12px rgba(56,189,248,0.6);}
+.nav-dot.done-ok{background:var(--ok-bg);border-color:var(--ok);color:#a7f3d0;}
+.nav-dot.done-no{background:var(--no-bg);border-color:var(--no);color:#fca5a5;}
+.question-card{background:var(--surface);border:2px solid var(--border);border-radius:var(--radius);padding:28px;box-shadow:0 10px 30px rgba(0,0,0,0.4);display:none;}
+.question-card.active{display:block;animation:fadeIn 0.25s ease-out;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+.q-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(56,189,248,0.15);border:1px solid var(--primary);color:#7dd3fc;font-size:0.76rem;font-weight:800;text-transform:uppercase;letter-spacing:0.5px;padding:5px 14px;border-radius:20px;margin-bottom:14px;}
+.q-statement{font-size:1.12rem;font-weight:700;color:#fff;line-height:1.6;margin-bottom:12px;}
+.q-subtext{font-size:0.9rem;color:var(--text-muted);margin-bottom:16px;background:rgba(255,255,255,0.03);padding:8px 12px;border-radius:8px;border-left:3px solid var(--accent);}
+code{background:#090e17;color:#38bdf8;padding:3px 8px;border-radius:6px;font-family:'Courier New',monospace;font-weight:700;font-size:0.9em;border:1px solid #1e293b;}
+.options-grid{display:flex;flex-direction:column;gap:10px;margin:16px 0;}
+.opt-btn{background:var(--surface-card);border:2px solid var(--border);color:var(--text);border-radius:10px;padding:14px 18px;font-size:0.95rem;text-align:left;cursor:pointer;transition:var(--trans);display:flex;align-items:center;gap:12px;font-family:inherit;}
+.opt-btn:hover:not(:disabled){background:var(--surface-hover);border-color:var(--primary);transform:translateX(4px);}
+.opt-btn.selected-multi{border-color:var(--primary);background:rgba(56,189,248,0.18);box-shadow:0 0 10px rgba(56,189,248,0.25);}
+.opt-btn.correct{background:var(--ok-bg)!important;border-color:var(--ok)!important;color:var(--ok-text)!important;}
+.opt-btn.wrong{background:var(--no-bg)!important;border-color:var(--no)!important;color:var(--no-text)!important;}
+.opt-btn.missed{border-color:#f59e0b!important;border-style:dashed!important;background:rgba(245,158,11,0.12)!important;}
+.opt-btn:disabled{cursor:default;}
+.input-answer-box{display:flex;gap:10px;margin:16px 0;flex-wrap:wrap;}
+.custom-input{flex:1;min-width:220px;padding:13px 16px;background:#090e17;border:2px solid var(--border);border-radius:8px;color:#fff;font-family:inherit;font-size:1rem;outline:none;transition:var(--trans);}
+.custom-input::placeholder{color:#64748b;}
+.custom-input:focus{border-color:var(--border-focus);box-shadow:0 0 10px rgba(56,189,248,0.3);}
+.custom-input:disabled{background:#0d1524!important;color:#fff!important;opacity:1!important;border-color:#475569!important;}
+.sortable-list{display:flex;flex-direction:column;gap:8px;margin:16px 0;}
+.sort-item{background:var(--surface-card);border:1px solid var(--border);padding:12px 16px;border-radius:8px;display:flex;justify-content:space-between;align-items:center;font-size:0.92rem;font-weight:700;color:#fff;gap:10px;}
+.sort-actions{display:flex;gap:6px;}
+.btn-sort{background:#0f172a;border:1px solid var(--border);color:#f8fafc;width:32px;height:32px;border-radius:6px;cursor:pointer;font-size:0.85rem;font-weight:bold;}
+.btn-sort:hover{color:var(--primary);border-color:var(--primary);}
+.match-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:16px 0;}
+.match-col{display:flex;flex-direction:column;gap:8px;}
+.match-btn{background:var(--surface-card);border:2px solid var(--border);color:var(--text);padding:12px 14px;border-radius:8px;font-size:0.88rem;font-weight:600;cursor:pointer;text-align:left;transition:var(--trans);font-family:inherit;min-height:52px;}
+.match-btn.selected{border-color:var(--accent);background:rgba(245,158,11,0.2);}
+.match-btn.matched{border-color:var(--ok);background:var(--ok-bg);color:var(--ok-text);cursor:default;pointer-events:none;}
+.buckets-container{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:16px 0;}
+.bucket{background:#0b1120;border:2px dashed #475569;border-radius:10px;padding:16px;min-height:130px;cursor:pointer;}
+.bucket:hover{border-color:var(--primary);background:#0f182c;}
+.bucket.travado{pointer-events:none;opacity:.85;}
+.bucket-title{font-size:0.84rem;font-weight:800;color:var(--primary);margin-bottom:10px;text-transform:uppercase;}
+.bucket-items{display:flex;flex-direction:column;gap:8px;min-height:50px;}
+.bucket-pool{background:#090e17;border:1px solid var(--border);padding:14px;border-radius:8px;margin-bottom:12px;display:flex;gap:8px;flex-wrap:wrap;}
+.chip-item{background:#1e293b;border:1px solid #334155;color:#f8fafc;padding:7px 14px;border-radius:20px;font-size:0.84rem;font-weight:700;cursor:pointer;transition:var(--trans);}
+.chip-item.active-chip{border-color:var(--accent);background:var(--accent-orange);color:#fff;box-shadow:0 0 10px rgba(234,88,12,0.4);}
+.chip-item.travado{pointer-events:none;opacity:.85;}
+.code-error-box{background:#060911;border:2px solid var(--border);border-radius:10px;padding:10px 0;margin:14px 0;font-family:'Courier New',monospace;font-size:0.9rem;}
+.code-line{padding:8px 18px;cursor:pointer;display:flex;gap:14px;transition:var(--trans);color:#f8fafc;align-items:flex-start;}
+.code-line:hover{background:#162032;}
+.code-line.selected-err{background:var(--no-bg);border-left:5px solid var(--no);color:#fee2e2;}
+.line-no{color:#64748b;user-select:none;width:20px;text-align:right;flex-shrink:0;}
+.evolution-hotspot{background:#070c18;border:2px solid var(--border);border-radius:12px;padding:20px;margin:16px 0;display:grid;grid-template-columns:repeat(4,1fr);gap:8px;}
+.evo-card{background:#111827;border:2px solid #1f2937;border-radius:10px;padding:14px 10px;text-align:center;cursor:pointer;transition:var(--trans);}
+.evo-card:hover{border-color:var(--primary);transform:translateY(-2px);}
+.evo-card.picked{border-color:#facc15;box-shadow:0 0 14px rgba(250,204,21,0.6);}
+.evo-card.picked.ok{border-color:var(--ok);box-shadow:0 0 14px rgba(16,185,129,0.6);}
+.evo-card.picked.no{border-color:var(--no);box-shadow:0 0 14px rgba(239,68,68,0.6);}
+.evo-card .emoji{font-size:1.7rem;display:block;margin-bottom:4px;}
+.evo-card .titulo{font-size:0.82rem;font-weight:800;color:#fff;display:block;}
+.evo-card .periodo{font-size:0.7rem;color:#94a3b8;margin-top:2px;display:block;}
+.feedback-box{display:none;border-radius:10px;padding:16px 20px;margin-top:18px;font-size:0.92rem;line-height:1.6;}
+.feedback-box.show{display:block;animation:fadeIn 0.2s ease-out;}
+.feedback-box.ok{background:var(--ok-bg);border-left:5px solid var(--ok);color:var(--ok-text);}
+.feedback-box.no{background:var(--no-bg);border-left:5px solid var(--no);color:var(--no-text);}
+.q-footer{display:flex;justify-content:space-between;align-items:center;margin-top:24px;padding-top:18px;border-top:1px solid var(--border);gap:10px;flex-wrap:wrap;}
+.btn-action{background:linear-gradient(135deg,var(--primary-dark),#2563eb);color:#fff;border:none;padding:12px 26px;border-radius:30px;font-size:0.9rem;font-weight:800;cursor:pointer;transition:var(--trans);display:inline-flex;align-items:center;gap:6px;font-family:inherit;}
+.btn-action:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 6px 18px rgba(2,132,199,0.5);}
+.btn-action:disabled{opacity:0.45;cursor:not-allowed;}
+.btn-sec{background:#1e293b;border:1px solid var(--border);color:#cbd5e1;}
+.btn-sec:hover{color:#fff;border-color:var(--primary);}
+select.gap-select{background:#0d1524;color:#38bdf8;border:2px solid #38bdf8;padding:5px 10px;border-radius:6px;font-family:monospace;font-weight:bold;font-size:0.95rem;}
+select.gap-select option{background:#0d1524;color:#f8fafc;}
+.report-card{display:none;background:var(--surface);border:2px solid var(--primary-dark);border-radius:var(--radius);padding:34px 28px;text-align:center;}
+.report-card.show{display:block;animation:fadeIn 0.3s ease;}
+.report-score{font-size:3.5rem;font-weight:900;color:var(--primary);margin:10px 0;}
+.report-textarea{width:100%;height:180px;background:#070c16;border:1px solid var(--border);border-radius:8px;padding:12px;color:#e2e8f0;font-family:monospace;font-size:0.82rem;margin:16px 0;resize:vertical;}
+.form-link{display:inline-flex;align-items:center;gap:8px;background:#0d1e1b;border:1px solid var(--ok);color:#d1fae5;padding:10px 18px;border-radius:10px;text-decoration:none;font-size:0.88rem;font-weight:700;transition:var(--trans);margin-top:8px;}
+.form-link:hover{background:#064e3b;color:#fff;}
+@media (max-width:768px){
+  .match-grid,.buckets-container{grid-template-columns:1fr;}
+  .hud-top{flex-direction:column;align-items:flex-start;}
+  .question-card{padding:20px 14px;}
+  .evolution-hotspot{grid-template-columns:repeat(2,1fr);}
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <header class="hud-header">
+    <div class="hud-top">
+      <div class="hud-title">
+        <h1>🎮 Desafio <span>Tema 03</span></h1>
+        <p>SEO Avançado • 20 questões gamificadas</p>
+      </div>
+      <div class="stats-bar">
+        <div class="stat-chip score">⚡ <span id="val-score">0</span> pts</div>
+        <div class="stat-chip streak">🔥 Combo <span id="val-streak">0</span>x</div>
+      </div>
+    </div>
+    <div class="hud-progress">
+      <div class="progress-meta">
+        <span>Progresso Geral</span>
+        <span id="txt-prog">Questão 1 de 20</span>
+      </div>
+      <div class="progress-track"><div class="progress-fill" id="bar-prog"></div></div>
+    </div>
+  </header>
+
+  <nav class="nav-dots" id="dots-container" aria-label="Navegador de Questões"></nav>
+
+  <main id="questions-viewport"></main>
+
+  <section class="report-card" id="final-report">
+    <h2>🏆 Desafio Concluído!</h2>
+    <p style="color:var(--text-muted); margin-top:4px;">Confira seu desempenho nas 20 questões do Tema 03</p>
+    <div class="report-score" id="final-score-txt">0 / 20</div>
+    <p id="final-feedback-badge" style="font-size:1.15rem; font-weight:800; margin-bottom:14px;"></p>
+    <textarea class="report-textarea" id="report-copy-box" readonly></textarea>
+    <div style="display:flex; justify-content:center; gap:10px; flex-wrap:wrap;">
+      <button type="button" class="btn-action" id="btn-copy-rep">📋 Copiar Resumo</button>
+      <button type="button" class="btn-action btn-sec" onclick="location.reload()">🔄 Reiniciar Desafio</button>
+    </div>
+    <div style="margin-top:16px;">
+      <a class="form-link" href="https://forms.gle/zbUB57A4FteUDsKSA" target="_blank" rel="noopener">
+        📝 Enviar relatório no Google Forms
+      </a>
+    </div>
+  </section>
+</div>
+
+<script>
+var DATABASE = [
+  { id:1, type:"choice", badge:"1. Múltipla Escolha • On-Page",
+    title:"Segundo a apostila, quantas técnicas de otimização on-page avançada são listadas?",
+    options:[
+      { t:"5 técnicas", ok:false },
+      { t:"7 técnicas", ok:false },
+      { t:"10 técnicas", ok:true },
+      { t:"15 técnicas", ok:false }
+    ],
+    exp:"A apostila lista 10: título e meta, palavras-chave, imagens/ALT, URL amigável, dados estruturados, páginas segmentadas, velocidade, conteúdo interativo, testes A/B e mobile-first."
+  },
+  { id:2, type:"tf", badge:"2. Verdadeiro ou Falso • Link Building",
+    title:"Segundo a apostila, no link building estratégico a quantidade de links é mais importante que a qualidade e a relevância.",
+    ok:false,
+    exp:"Falso! A apostila é explícita: 'qualidade sobre quantidade' — priorize backlinks de sites relevantes ao nicho e com boa autoridade de domínio."
+  },
+  { id:3, type:"multi", badge:"3. Múltiplas Respostas • SEO Técnico",
+    title:"Quais são pilares do SEO TÉCNICO listados na apostila? (Selecione todos)",
+    options:[
+      { t:"Redirecionamentos 301/302 e URLs amigáveis", ok:true },
+      { t:"Canônicos e robots.txt", ok:true },
+      { t:"Compra de backlinks em massa", ok:false },
+      { t:"Segurança e HTTPS", ok:true }
+    ],
+    exp:"A apostila lista 5 pilares do técnico: URL/redirecionamentos, indexação/sitemap, canônicos/paginação, robots.txt e HTTPS. Compra de backlinks é tática proibida em link building, não em técnico."
+  },
+  { id:4, type:"typed", badge:"4. Resposta Digitada • Schema",
+    title:"A apostila cita uma linguagem de marcação padrão que ajuda a definir e categorizar elementos do site. Qual é o nome dessa linguagem?",
+    sub:"Digite apenas o nome (sem .org):",
+    answer:"schema",
+    exp:"A apostila diz: 'O Schema.org é uma linguagem de marcação padrão que ajuda a definir e categorizar diferentes elementos do seu site.'"
+  },
+  { id:5, type:"number", badge:"5. Resposta Numérica • Métricas",
+    title:"Segundo a apostila, quantas MÉTRICAS AVANÇADAS DE SEO são listadas?",
+    sub:"Informe apenas o número:",
+    answer:10,
+    exp:"São 10: CTR, taxa de rejeição, tempo médio, conversão orgânica, taxa de rastreamento, long-tail, taxa de indexação, duração de sessão, retenção de palavras-chave e cliques posicionados."
+  },
+  { id:6, type:"sort", badge:"6. Ordenação • Métricas",
+    title:"Ordene as métricas do MENOR escopo para o MAIOR escopo de análise:",
+    items:[
+      "CTR (uma impressão/resultado específico)",
+      "Tempo Médio na Página (uma página)",
+      "Duração da Sessão (visita completa)",
+      "Conversão Orgânica (jornada até a ação final)"
+    ],
+    correctOrder:[0,1,2,3],
+    exp:"A apostila ordena do mais granular (CTR) ao mais amplo (conversão), passando por tempo na página e duração da sessão."
+  },
+  { id:7, type:"match", badge:"7. Associação • Link Building",
+    title:"Associe cada abordagem de link building à sua descrição, conforme a apostila:",
+    pairs:[
+      { left:"Guest Posting", right:"Contribuir com conteúdo em sites de terceiros" },
+      { left:"Outreach Personalizado", right:"Contato direto para solicitar backlinks" },
+      { left:"Participação em Comunidades", right:"Engajar-se em fóruns e grupos para relacionamentos" }
+    ],
+    exp:"A apostila lista essas 3 abordagens + o link building baseado em conteúdo excepcional."
+  },
+  { id:8, type:"buckets", badge:"8. Classificação • Link Building",
+    title:"Classifique as táticas como ÉTICA ou NÃO ÉTICA em link building, conforme a apostila:",
+    buckets:["Tática Ética","Tática Não Ética"],
+    items:[
+      { text:"Guest posting em sites de nicho", b:0 },
+      { text:"Compra de backlinks", b:1 },
+      { text:"Criar conteúdo excepcional que atrai backlinks", b:0 },
+      { text:"Troca excessiva de links", b:1 }
+    ],
+    exp:"A apostila avisa: 'Comprar backlinks pode resultar em penalizações' e 'o foco deve estar na obtenção de backlinks naturais e orgânicos, em vez de trocas excessivas'."
+  },
+  { id:9, type:"gap", badge:"9. Completar Lacunas • AMP",
+    title:"Complete a afirmativa sobre AMP com a palavra correta:",
+    snippet:'As páginas AMP são pré-armazenadas em <b>_____1_____</b> por provedores de conteúdo, resultando em carregamento instantâneo.',
+    options:["cache","backup","servidor local","CDN externa"],
+    correct:"cache",
+    exp:"A apostila diz: 'as páginas AMP são pré-armazenadas em cache por provedores de conteúdo, resultando em carregamento instantâneo ao serem acessadas'."
+  },
+  { id:10, type:"hotspot", badge:"10. Hotspot • Tipos de Schema",
+    title:"Clique no tipo de marcação Schema que a apostila associa a PREÇOS e AVALIAÇÕES de itens vendidos:",
+    target:"produto",
+    exp:"A apostila: 'Produto: para exibir detalhes de produtos, incluindo preços e avaliações.'"
+  },
+  { id:11, type:"errorcode", badge:"11. Caça ao Erro • SEO Técnico",
+    title:"Clique na linha com afirmação ERRADA sobre SEO técnico:",
+    lines:[
+      "Robots.txt controla quais partes do site podem ser rastreadas.",
+      "Tags canônicas evitam conteúdo duplicado.",
+      "Comprimir imagens agrava o tempo de carregamento.",
+      "Redirecionamentos 301 e 302 tratam URLs antigas ou quebradas."
+    ],
+    errLine:2,
+    exp:"A apostila diz o oposto: comprimir imagens REDUZ o tempo de carregamento. É uma das principais técnicas de otimização de velocidade."
+  },
+  { id:12, type:"choice", badge:"12. Múltipla Escolha • Pesquisa de Voz",
+    title:"Segundo a apostila, qual é a característica principal das consultas em pesquisa por voz?",
+    options:[
+      { t:"São curtas e técnicas.", ok:false },
+      { t:"São naturais e coloquiais, como se estivessem falando com outra pessoa.", ok:true },
+      { t:"Usam sempre uma única palavra.", ok:false },
+      { t:"Não usam palavras-chave.", ok:false }
+    ],
+    exp:"A apostila: 'a pesquisa por voz é caracterizada por consultas mais naturais e coloquiais. As pessoas tendem a fazer perguntas completas.'"
+  },
+  { id:13, type:"choice", badge:"13. Múltipla Escolha • E-commerce",
+    title:"Qual das opções abaixo NÃO é uma prática recomendada de SEO para e-commerce, segundo a apostila?",
+    options:[
+      { t:"Criar descrições únicas para cada produto.", ok:false },
+      { t:"Incentivar avaliações de clientes.", ok:false },
+      { t:"Repetir a mesma descrição em todos os produtos para economizar tempo.", ok:true },
+      { t:"Listar produtos no Google Shopping.", ok:false }
+    ],
+    exp:"A apostila diz explicitamente: 'crie descrições únicas e atraentes para cada produto, evitando conteúdo duplicado.' Repetir descrições é prejudicial."
+  },
+  { id:14, type:"number", badge:"14. Resposta Numérica • Google Meu Negócio",
+    title:"Segundo a apostila, quantos recursos do Google Meu Negócio são listados?",
+    sub:"Informe apenas o número:",
+    answer:8,
+    exp:"São 8: reivindicação/verificação, informações detalhadas, fotos de qualidade, avaliações e respostas, publicações, insights, geotagging de fotos e recursos adicionais (mensagens, reservas)."
+  },
+  { id:15, type:"tf", badge:"15. Verdadeiro ou Falso • E-commerce",
+    title:"Segundo a apostila, incluir palavras-chave nas URLs de produtos é uma boa prática de SEO para e-commerce.",
+    ok:true,
+    exp:"Verdadeiro! A apostila lista como ponto 9 do SEO para e-commerce: 'inclua palavras-chave relevantes nas URLs de produtos para melhorar a visibilidade'."
+  },
+  { id:16, type:"choice", badge:"16. Múltipla Escolha • On-Page",
+    title:"Segundo a apostila, o que os dados estruturados e Schema permitem exibir diretamente nos resultados de busca?",
+    options:[
+      { t:"Somente o título e a URL.", ok:false },
+      { t:"Informações enriquecidas como avaliações, preços, horários e resumos de conteúdo.", ok:true },
+      { t:"Apenas imagens.", ok:false },
+      { t:"Nenhuma informação extra.", ok:false }
+    ],
+    exp:"A apostila: 'Os dados estruturados permitem que informações como avaliações, preços, horários de funcionamento e resumos de conteúdo sejam exibidas diretamente nos resultados de pesquisa.'"
+  },
+  { id:17, type:"match", badge:"17. Associação • Pesquisa de Palavras-Chave",
+    title:"Associe cada ferramenta citada pela apostila ao seu uso:",
+    pairs:[
+      { left:"Google Keyword Planner", right:"Explorar volume de busca e tendências" },
+      { left:"SEMrush", right:"Análise de concorrência e palavras-chave" },
+      { left:"Ahrefs", right:"Backlinks e autoridade de domínio" }
+    ],
+    exp:"A apostila: 'Utilize ferramentas avançadas de pesquisa de palavras-chave, como o Google Keyword Planner, SEMrush, Ahrefs e Moz Keyword Explorer.'"
+  },
+  { id:18, type:"buckets", badge:"18. Classificação • Métricas de SEO",
+    title:"Classifique cada métrica como sendo de ENGAJAMENTO ou de DESCOBERTA (indexação/rastreamento):",
+    buckets:["Engajamento","Descoberta/Indexação"],
+    items:[
+      { text:"Tempo Médio na Página", b:0 },
+      { text:"Taxa de Rejeição", b:0 },
+      { text:"Taxa de Rastreamento", b:1 },
+      { text:"Taxa de Indexação", b:1 }
+    ],
+    exp:"Tempo na página e taxa de rejeição medem engajamento do usuário. Rastreamento e indexação medem se o Google está vendo o conteúdo."
+  },
+  { id:19, type:"errorcode", badge:"19. Caça ao Erro • AMP",
+    title:"Clique na linha com afirmação ERRADA sobre AMP:",
+    lines:[
+      "Páginas AMP são otimizadas para carregamento ultrarrápido em dispositivos móveis.",
+      "AMP permite qualquer script e recurso externo, como um site normal.",
+      "AMP restringe o uso de scripts e recursos externos, focando em conteúdo básico.",
+      "AMP pode ser usada com marcação Schema para enriquecer resultados."
+    ],
+    errLine:1,
+    exp:"A apostila diz o oposto: 'o AMP restringe o uso de scripts e recursos externos, focando em oferecer um conteúdo básico e rápido'."
+  },
+  { id:20, type:"choice", badge:"20. Múltipla Escolha • Síntese",
+    title:"Segundo a apostila, qual é a conclusão sobre o sucesso em SEO?",
+    options:[
+      { t:"Basta classificar bem em palavras-chave.", ok:false },
+      { t:"O sucesso do SEO não se resume a rankings — envolve também engajamento do usuário e conversão em clientes.", ok:true },
+      { t:"Depende apenas de link building.", ok:false },
+      { t:"Só funciona com anúncios pagos.", ok:false }
+    ],
+    exp:"A apostila: 'o sucesso do SEO não se resume apenas a classificações de palavras-chave, mas também ao engajamento do usuário e à conversão de visitantes em clientes'."
+  }
+];
+
+var curQ = 0, score = 0, streak = 0, userAnswers = {};
+
+function initApp() { renderNavDots(); renderAllQuestions(); showQuestion(0); }
+
+function updateHUD() {
+  document.getElementById('val-score').textContent = score;
+  document.getElementById('val-streak').textContent = streak;
+  var answeredCount = Object.keys(userAnswers).length;
+  document.getElementById('txt-prog').textContent = 'Questão ' + (curQ + 1) + ' de ' + DATABASE.length + ' (' + answeredCount + ' respondidas)';
+  document.getElementById('bar-prog').style.width = ((answeredCount / DATABASE.length) * 100) + '%';
+}
+
+function renderNavDots() {
+  var container = document.getElementById('dots-container');
+  container.innerHTML = '';
+  DATABASE.forEach(function(q, idx){
+    var dot = document.createElement('button');
+    dot.className = 'nav-dot';
+    dot.id = 'dot-' + idx;
+    dot.textContent = idx + 1;
+    dot.onclick = function(){ showQuestion(idx); };
+    container.appendChild(dot);
+  });
+}
+
+function showQuestion(idx) {
+  curQ = idx;
+  document.querySelectorAll('.question-card').forEach(function(c){ c.classList.remove('active'); });
+  var target = document.getElementById('q-card-' + idx);
+  if(target) target.classList.add('active');
+  document.querySelectorAll('.nav-dot').forEach(function(d){ d.classList.remove('active'); });
+  var dot = document.getElementById('dot-' + idx);
+  if(dot){
+    dot.classList.add('active');
+    dot.scrollIntoView({ behavior:'smooth', inline:'center', block:'nearest' });
+  }
+  updateHUD();
+}
+
+function renderAllQuestions() {
+  var viewport = document.getElementById('questions-viewport');
+  viewport.innerHTML = '';
+  DATABASE.forEach(function(q, idx){
+    var card = document.createElement('section');
+    card.className = 'question-card';
+    card.id = 'q-card-' + idx;
+    var bodyHTML = '';
+
+    if(q.type === 'choice'){
+      bodyHTML = '<div class="options-grid">' + q.options.map(function(opt, oIdx){
+        return '<button type="button" class="opt-btn" onclick="checkChoice(' + idx + ',' + oIdx + ')">' +
+               '<strong style="color:var(--primary);font-size:1.05rem;">' + ['A','B','C','D'][oIdx] + '</strong>' +
+               '<span>' + escapeHTML(opt.t) + '</span></button>';
+      }).join('') + '</div>';
+    } else if(q.type === 'tf'){
+      bodyHTML = '<div class="options-grid">' +
+        '<button type="button" class="opt-btn" onclick="checkTF(' + idx + ', true)"><strong style="color:var(--ok);font-size:1.2rem;">V</strong> <span>Verdadeiro</span></button>' +
+        '<button type="button" class="opt-btn" onclick="checkTF(' + idx + ', false)"><strong style="color:var(--no);font-size:1.2rem;">F</strong> <span>Falso</span></button>' +
+        '</div>';
+    } else if(q.type === 'multi'){
+      bodyHTML = '<div class="options-grid" id="multi-opts-' + idx + '">' +
+        q.options.map(function(opt, oIdx){
+          return '<button type="button" class="opt-btn" onclick="toggleMulti(' + idx + ',' + oIdx + ')">' +
+                 '<span class="chk-box" style="font-size:1.1rem;color:var(--primary);">⬜</span>' +
+                 '<span>' + escapeHTML(opt.t) + '</span></button>';
+        }).join('') +
+        '</div><button type="button" class="btn-action" id="btn-multi-' + idx + '" style="margin-top:12px;" onclick="checkMulti(' + idx + ')">Confirmar Seleção</button>';
+    } else if(q.type === 'typed' || q.type === 'number'){
+      bodyHTML = '<div class="input-answer-box">' +
+        '<input type="text" class="custom-input" id="input-' + idx + '" ' +
+        'placeholder="' + (q.type === 'number' ? 'Ex: 10' : 'Digite a palavra...') + '" ' +
+        'autocomplete="off" onkeydown="if(event.key===\'Enter\') checkInput(' + idx + ')">' +
+        '<button type="button" class="btn-action" onclick="checkInput(' + idx + ')">Confirmar</button></div>';
+    } else if(q.type === 'sort'){
+      var ordemInicial = embaralharOrdemInicial(idx);
+      bodyHTML = '<div class="sortable-list" id="sort-list-' + idx + '">' +
+        ordemInicial.map(function(posOriginal){
+          var item = q.items[posOriginal];
+          return '<div class="sort-item" data-pos="' + posOriginal + '">' +
+                 '<span>' + item + '</span>' +
+                 '<div class="sort-actions">' +
+                 '<button type="button" class="btn-sort" data-idx="' + idx + '" data-pos="' + posOriginal + '" data-dir="-1">▲</button>' +
+                 '<button type="button" class="btn-sort" data-idx="' + idx + '" data-pos="' + posOriginal + '" data-dir="1">▼</button>' +
+                 '</div></div>';
+        }).join('') +
+        '</div><button type="button" class="btn-action" id="btn-sort-' + idx + '" style="margin-top:12px;" onclick="checkSort(' + idx + ')">Verificar Ordem</button>';
+    } else if(q.type === 'match'){
+      bodyHTML = '<div class="match-grid">' +
+        '<div class="match-col" id="match-l-' + idx + '">' +
+        q.pairs.map(function(p, pIdx){
+          return '<button type="button" class="match-btn" data-type="l" data-idx="' + pIdx + '" onclick="clickMatch(' + idx + ',\'l\',' + pIdx + ')">' + escapeHTML(p.left) + '</button>';
+        }).join('') + '</div>' +
+        '<div class="match-col" id="match-r-' + idx + '">' +
+        shuffle(q.pairs.slice()).map(function(p, rIdx){
+          return '<button type="button" class="match-btn" data-type="r" data-ridx="' + rIdx + '" data-val="' + escapeHTML(p.right).replace(/'/g, '&#39;') + '" onclick="clickMatch(' + idx + ',\'r\',' + rIdx + ')">' + escapeHTML(p.right) + '</button>';
+        }).join('') + '</div></div>';
+    } else if(q.type === 'buckets'){
+      bodyHTML = '<div class="bucket-pool" id="pool-' + idx + '">' +
+        q.items.map(function(it, iIdx){
+          return '<span class="chip-item" id="chip-' + idx + '-' + iIdx + '" onclick="pickChip(event,' + idx + ',' + iIdx + ')">' + it.text + '</span>';
+        }).join('') + '</div>' +
+        '<div class="buckets-container" id="buckets-container-' + idx + '">' +
+        q.buckets.map(function(bName, bIdx){
+          return '<div class="bucket" onclick="placeChip(' + idx + ',' + bIdx + ')">' +
+                 '<div class="bucket-title">📂 ' + bName + ' (clique para colocar)</div>' +
+                 '<div class="bucket-items" id="b-items-' + idx + '-' + bIdx + '"></div></div>';
+        }).join('') +
+        '</div><button type="button" class="btn-action" id="btn-buckets-' + idx + '" style="margin-top:12px;" onclick="checkBuckets(' + idx + ')">Conferir Distribuição</button>';
+    } else if(q.type === 'gap'){
+      bodyHTML = '<div style="background:#070c16;padding:18px;border:2px solid var(--border);border-radius:10px;font-family:monospace;margin:16px 0;font-size:1rem;color:#fff;">' +
+        q.snippet.replace('_____1_____', '<select class="gap-select" id="gap-sel-' + idx + '">' +
+          '<option value="">-- escolha --</option>' +
+          q.options.map(function(o){ return '<option value="' + o + '">' + o + '</option>'; }).join('') +
+          '</select>') +
+        '</div><button type="button" class="btn-action" id="btn-gap-' + idx + '" onclick="checkGap(' + idx + ')">Confirmar Lacuna</button>';
+    } else if(q.type === 'hotspot'){
+      bodyHTML = '<div class="evolution-hotspot">' +
+        '<div class="evo-card" onclick="clickHotspot(' + idx + ',\'artigo\',this)"><span class="emoji">📰</span><span class="titulo">Artigo</span><span class="periodo">Notícias</span></div>' +
+        '<div class="evo-card" onclick="clickHotspot(' + idx + ',\'receita\',this)"><span class="emoji">🍰</span><span class="titulo">Receita</span><span class="periodo">Culinária</span></div>' +
+        '<div class="evo-card" onclick="clickHotspot(' + idx + ',\'produto\',this)"><span class="emoji">🛒</span><span class="titulo">Produto</span><span class="periodo">Preços e avaliações</span></div>' +
+        '<div class="evo-card" onclick="clickHotspot(' + idx + ',\'evento\',this)"><span class="emoji">🎫</span><span class="titulo">Evento</span><span class="periodo">Datas e locais</span></div>' +
+        '</div>';
+    } else if(q.type === 'errorcode'){
+      bodyHTML = '<div class="code-error-box">' +
+        q.lines.map(function(l, lIdx){
+          return '<div class="code-line" onclick="clickErrorLine(' + idx + ',' + lIdx + ')">' +
+                 '<span class="line-no">' + (lIdx + 1) + '</span>' +
+                 '<code>' + escapeHTML(l) + '</code></div>';
+        }).join('') + '</div>';
+    }
+
+    card.innerHTML =
+      '<div class="q-badge">' + q.badge + '</div>' +
+      '<div class="q-statement">' + q.title + '</div>' +
+      (q.sub ? '<div class="q-subtext">' + q.sub + '</div>' : '') +
+      bodyHTML +
+      '<div class="feedback-box" id="fb-' + idx + '"></div>' +
+      '<div class="q-footer">' +
+        '<button type="button" class="btn-action btn-sec" onclick="showQuestion(Math.max(0,' + (idx - 1) + '))" ' + (idx === 0 ? 'disabled' : '') + '>⬅ Anterior</button>' +
+        '<span style="font-size:0.85rem;color:var(--text-muted);font-weight:800;">' + (idx + 1) + ' / 20</span>' +
+        '<button type="button" class="btn-action" onclick="nextOrFinish(' + idx + ')">' + (idx === 19 ? 'Finalizar Desafio 🏁' : 'Próxima ➡') + '</button>' +
+      '</div>';
+    viewport.appendChild(card);
+  });
+
+  document.querySelectorAll('.btn-sort').forEach(function(b){
+    b.addEventListener('click', function(){
+      moveSort(parseInt(b.dataset.idx, 10), b, parseInt(b.dataset.dir, 10));
+    });
+  });
+}
+
+function embaralharOrdemInicial(idx){
+  var arr = [0,1,2,3];
+  do {
+    arr = shuffle(arr);
+  } while (arr.every(function(v, i){ return v === i; }));
+  return arr;
+}
+
+function registerAnswer(qIdx, isOk, expText) {
+  if (userAnswers[qIdx] !== undefined) return;
+  userAnswers[qIdx] = { ok: isOk };
+  var fb = document.getElementById('fb-' + qIdx);
+  fb.className = 'feedback-box show ' + (isOk ? 'ok' : 'no');
+  fb.innerHTML = '<strong>' + (isOk ? '✅ Resposta Correta!' : '❌ Resposta Incorreta.') + '</strong><br>' + expText;
+  var dot = document.getElementById('dot-' + qIdx);
+  if (dot) dot.className = 'nav-dot ' + (isOk ? 'done-ok' : 'done-no');
+  if (isOk) { score += 100 + (streak * 20); streak++; } else { streak = 0; }
+  updateHUD();
+}
+
+function checkChoice(qIdx, optIdx) {
+  var q = DATABASE[qIdx];
+  var isOk = q.options[optIdx].ok;
+  var btns = document.querySelectorAll('#q-card-' + qIdx + ' .opt-btn');
+  btns.forEach(function(b, i){
+    b.disabled = true;
+    if (q.options[i].ok) b.classList.add('correct');
+    else if (i === optIdx) b.classList.add('wrong');
+  });
+  registerAnswer(qIdx, isOk, q.exp);
+}
+
+function checkTF(qIdx, val) {
+  var q = DATABASE[qIdx];
+  var isOk = (q.ok === val);
+  var btns = document.querySelectorAll('#q-card-' + qIdx + ' .opt-btn');
+  btns.forEach(function(b){ b.disabled = true; });
+  if (val === true) btns[0].classList.add(isOk ? 'correct' : 'wrong');
+  else btns[1].classList.add(isOk ? 'correct' : 'wrong');
+  registerAnswer(qIdx, isOk, q.exp);
+}
+
+var multiState = {};
+function toggleMulti(qIdx, oIdx) {
+  if (userAnswers[qIdx]) return;
+  if (!multiState[qIdx]) multiState[qIdx] = new Set();
+  var set = multiState[qIdx];
+  var btn = document.querySelectorAll('#multi-opts-' + qIdx + ' .opt-btn')[oIdx];
+  if (set.has(oIdx)) {
+    set.delete(oIdx);
+    btn.classList.remove('selected-multi');
+    btn.querySelector('.chk-box').textContent = '⬜';
+  } else {
+    set.add(oIdx);
+    btn.classList.add('selected-multi');
+    btn.querySelector('.chk-box').textContent = '☑️';
+  }
+}
+
+function checkMulti(qIdx) {
+  if (userAnswers[qIdx] !== undefined) return;
+  var q = DATABASE[qIdx];
+  var chosen = multiState[qIdx] || new Set();
+  if (chosen.size === 0) {
+    alert('Marque ao menos uma opção antes de confirmar.');
+    return;
+  }
+  var correctIndices = q.options.map(function(o, i){ return o.ok ? i : null; }).filter(function(i){ return i !== null; });
+  var isOk = correctIndices.length === chosen.size && correctIndices.every(function(i){ return chosen.has(i); });
+  var btns = document.querySelectorAll('#multi-opts-' + qIdx + ' .opt-btn');
+  btns.forEach(function(b, i){
+    b.disabled = true;
+    if (q.options[i].ok && chosen.has(i)) { b.className = 'opt-btn correct'; b.querySelector('.chk-box').textContent = '✅'; }
+    else if (q.options[i].ok && !chosen.has(i)) { b.className = 'opt-btn missed'; b.querySelector('.chk-box').textContent = '⚠️'; }
+    else if (!q.options[i].ok && chosen.has(i)) { b.className = 'opt-btn wrong'; b.querySelector('.chk-box').textContent = '❌'; }
+  });
+  var btnConf = document.getElementById('btn-multi-' + qIdx);
+  if (btnConf) { btnConf.disabled = true; btnConf.textContent = 'Respondido'; }
+  registerAnswer(qIdx, isOk, q.exp);
+}
+
+function checkInput(qIdx) {
+  var q = DATABASE[qIdx];
+  var input = document.getElementById('input-' + qIdx);
+  var raw = input.value.trim().toLowerCase();
+  if (!raw) return;
+  input.disabled = true;
+  var isOk = false;
+  if (q.type === 'number') {
+    var num = parseFloat(raw.replace('px', '').trim());
+    isOk = (num === q.answer);
+  } else {
+    isOk = raw.indexOf(q.answer) !== -1;
+  }
+  input.style.borderColor = isOk ? 'var(--ok)' : 'var(--no)';
+  registerAnswer(qIdx, isOk, q.exp);
+}
+
+function moveSort(qIdx, btn, dir) {
+  if (userAnswers[qIdx]) return;
+  var list = document.getElementById('sort-list-' + qIdx);
+  var item = btn.closest('.sort-item');
+  var posOriginal = parseInt(item.dataset.pos, 10);
+  var items = Array.from(list.children);
+  var iIdx = items.indexOf(item);
+  var targetIdx = iIdx + dir;
+  if (targetIdx < 0 || targetIdx >= items.length) return;
+  if (dir === 1) list.insertBefore(items[targetIdx], item);
+  else list.insertBefore(item, items[targetIdx]);
+}
+
+function checkSort(qIdx) {
+  if (userAnswers[qIdx] !== undefined) return;
+  var q = DATABASE[qIdx];
+  var list = document.getElementById('sort-list-' + qIdx);
+  var currentPositions = Array.from(list.children).map(function(c){ return parseInt(c.dataset.pos, 10); });
+  var isOk = currentPositions.every(function(val, i){ return val === q.correctOrder[i]; });
+  list.querySelectorAll('button').forEach(function(b){ b.disabled = true; });
+  var btn = document.getElementById('btn-sort-' + qIdx);
+  if (btn) { btn.disabled = true; btn.textContent = 'Respondido'; }
+  registerAnswer(qIdx, isOk, q.exp);
+}
+
+var matchState = {};
+function clickMatch(qIdx, side, val) {
+  if (userAnswers[qIdx] !== undefined) return;
+  if (!matchState[qIdx]) matchState[qIdx] = { l:null, r:null, matches:{} };
+  var st = matchState[qIdx];
+  if (side === 'l') {
+    document.querySelectorAll('#match-l-' + qIdx + ' .match-btn').forEach(function(b){ b.classList.remove('selected'); });
+    st.l = val;
+    var elL = document.querySelector('#match-l-' + qIdx + ' [data-idx="' + val + '"]');
+    if(elL) elL.classList.add('selected');
+  } else {
+    document.querySelectorAll('#match-r-' + qIdx + ' .match-btn').forEach(function(b){ b.classList.remove('selected'); });
+    st.r = val;
+    var elR = document.querySelector('#match-r-' + qIdx + ' [data-ridx="' + val + '"]');
+    if(elR) elR.classList.add('selected');
+  }
+  if (st.l !== null && st.r !== null) {
+    var q = DATABASE[qIdx];
+    var parDireita = q.pairs.find(function(p){ return p.right === st.rText; });
+    var elDir = document.querySelector('#match-r-' + qIdx + ' [data-ridx="' + st.r + '"]');
+    var textoDir = elDir ? elDir.dataset.val : '';
+    var parEsq = q.pairs[st.l];
+    var isCorrectPair = parEsq && parEsq.right === textoDir;
+    if (isCorrectPair) {
+      var elEsq = document.querySelector('#match-l-' + qIdx + ' [data-idx="' + st.l + '"]');
+      if(elEsq) { elEsq.classList.add('matched'); elEsq.disabled = true; }
+      if(elDir) { elDir.classList.add('matched'); elDir.disabled = true; }
+      st.matches[st.l] = true;
+    }
+    st.l = null; st.r = null;
+    document.querySelectorAll('#q-card-' + qIdx + ' .match-btn').forEach(function(b){ b.classList.remove('selected'); });
+    if (Object.keys(st.matches).length === q.pairs.length) {
+      registerAnswer(qIdx, true, q.exp);
+    }
+  }
+}
+
+var bucketState = {};
+function pickChip(e, qIdx, chipIdx) {
+  if (e && e.stopPropagation) e.stopPropagation();
+  if (userAnswers[qIdx] !== undefined) return;
+  if (!bucketState[qIdx]) bucketState[qIdx] = { selected:null, assigned:{} };
+  bucketState[qIdx].selected = chipIdx;
+  document.querySelectorAll('#q-card-' + qIdx + ' .chip-item').forEach(function(c){
+    if (c.id === 'chip-' + qIdx + '-' + chipIdx) c.classList.add('active-chip');
+    else c.classList.remove('active-chip');
+  });
+}
+
+function placeChip(qIdx, bucketIdx) {
+  var st = bucketState[qIdx];
+  if (!st || st.selected === null) return;
+  if (userAnswers[qIdx] !== undefined) return;
+  var chipEl = document.getElementById('chip-' + qIdx + '-' + st.selected);
+  if (!chipEl) return;
+  var targetBucket = document.getElementById('b-items-' + qIdx + '-' + bucketIdx);
+  targetBucket.appendChild(chipEl);
+  chipEl.classList.remove('active-chip');
+  st.assigned[st.selected] = bucketIdx;
+  st.selected = null;
+}
+
+function checkBuckets(qIdx) {
+  if (userAnswers[qIdx] !== undefined) return;
+  var q = DATABASE[qIdx];
+  var st = bucketState[qIdx] || { assigned:{} };
+  var allAssigned = q.items.every(function(it, i){ return st.assigned[i] !== undefined; });
+  if (!allAssigned) { alert('Distribua todos os itens nos cestos antes de conferir!'); return; }
+  var isOk = q.items.every(function(it, i){ return st.assigned[i] === it.b; });
+  document.querySelectorAll('#q-card-' + qIdx + ' .chip-item').forEach(function(c){ c.classList.add('travado'); });
+  document.querySelectorAll('#q-card-' + qIdx + ' .bucket').forEach(function(b){ b.classList.add('travado'); });
+  var btn = document.getElementById('btn-buckets-' + qIdx);
+  if (btn) { btn.disabled = true; btn.textContent = 'Respondido'; }
+  registerAnswer(qIdx, isOk, q.exp);
+}
+
+function checkGap(qIdx) {
+  if (userAnswers[qIdx] !== undefined) return;
+  var q = DATABASE[qIdx];
+  var sel = document.getElementById('gap-sel-' + qIdx);
+  if (!sel.value) return;
+  var isOk = (sel.value === q.correct);
+  sel.disabled = true;
+  var btn = document.getElementById('btn-gap-' + qIdx);
+  if (btn) { btn.disabled = true; btn.textContent = 'Respondido'; }
+  registerAnswer(qIdx, isOk, q.exp);
+}
+
+function clickHotspot(qIdx, eraName, el) {
+  if (userAnswers[qIdx] !== undefined) return;
+  var q = DATABASE[qIdx];
+  var isOk = (eraName === q.target);
+  document.querySelectorAll('#q-card-' + qIdx + ' .evo-card').forEach(function(c){ c.classList.remove('picked','ok','no'); });
+  el.classList.add('picked');
+  el.classList.add(isOk ? 'ok' : 'no');
+  registerAnswer(qIdx, isOk, q.exp);
+}
+
+function clickErrorLine(qIdx, lineIdx) {
+  if (userAnswers[qIdx] !== undefined) return;
+  var q = DATABASE[qIdx];
+  var isOk = (lineIdx === q.errLine);
+  var lines = document.querySelectorAll('#q-card-' + qIdx + ' .code-line');
+  lines.forEach(function(l){ l.style.pointerEvents = 'none'; });
+  lines[lineIdx].classList.add('selected-err');
+  registerAnswer(qIdx, isOk, q.exp);
+}
+
+function nextOrFinish(idx) {
+  if (idx < DATABASE.length - 1) { showQuestion(idx + 1); }
+  else {
+    var respondidas = Object.keys(userAnswers).length;
+    var branco = DATABASE.length - respondidas;
+    if (branco > 0) {
+      if (!confirm('Você tem ' + branco + ' questão(ões) sem responder. Deseja finalizar mesmo assim?\n\n(Cancele para voltar e revisar)')) return;
+    }
+    showFinalReport();
+  }
+}
+
+function showFinalReport() {
+  document.getElementById('questions-viewport').style.display = 'none';
+  document.getElementById('dots-container').style.display = 'none';
+  var report = document.getElementById('final-report');
+  report.classList.add('show');
+  var total = DATABASE.length;
+  var correctCount = Object.values(userAnswers).filter(function(a){ return a.ok; }).length;
+  var pct = Math.round((correctCount / total) * 100);
+  document.getElementById('final-score-txt').textContent = correctCount + ' / ' + total;
+  var badge = document.getElementById('final-feedback-badge');
+  if (pct >= 85) { badge.textContent = '🏆 Nível Ouro: Domínio pleno do Tema 03!'; badge.style.color = 'var(--ok)'; }
+  else if (pct >= 65) { badge.textContent = '👏 Nível Prata: Bom rendimento! Revise os pontos com erro.'; badge.style.color = 'var(--accent)'; }
+  else { badge.textContent = '📖 Nível Bronze: Recomenda-se refazer a leitura e o quiz.'; badge.style.color = 'var(--no)'; }
+  var repText = '====================================================\n';
+  repText += 'RELATÓRIO OFICIAL: DESAFIO TEMA 03 (20 QUESTÕES)\n';
+  repText += 'Acertos: ' + correctCount + ' de ' + total + ' (' + pct + '%) • Pontuação: ' + score + ' pts\n';
+  repText += 'Data: ' + new Date().toLocaleString('pt-BR') + '\n';
+  repText += '----------------------------------------------------\n';
+  DATABASE.forEach(function(q, i){
+    var status = userAnswers[i] && userAnswers[i].ok ? '[ACERTO]' : '[ERRO]';
+    repText += 'Q' + (i + 1).toString().padStart(2, '0') + ': ' + status + ' - ' + q.badge.split('•')[0].trim() + '\n';
+  });
+  repText += '====================================================';
+  document.getElementById('report-copy-box').value = repText;
+}
+
+document.getElementById('btn-copy-rep').addEventListener('click', function(){
+  var box = document.getElementById('report-copy-box');
+  var btn = document.getElementById('btn-copy-rep');
+  box.select();
+  if (navigator.clipboard && window.isSecureContext) {
+    navigator.clipboard.writeText(box.value).then(function(){
+      btn.textContent = '✅ Copiado com Sucesso!';
+      setTimeout(function(){ btn.textContent = '📋 Copiar Resumo'; }, 2000);
+    }).catch(function(){
+      try { document.execCommand('copy'); btn.textContent = '✅ Copiado!';
+        setTimeout(function(){ btn.textContent = '📋 Copiar Resumo'; }, 2000); } catch(e){}
+    });
+  } else {
+    try {
+      document.execCommand('copy');
+      btn.textContent = '✅ Copiado com Sucesso!';
+      setTimeout(function(){ btn.textContent = '📋 Copiar Resumo'; }, 2000);
+    } catch(e){
+      alert('Selecione o texto manualmente (Ctrl+A / Ctrl+C).');
+    }
+  }
+});
+
+function escapeHTML(str) {
+  return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+function shuffle(arr) {
+  var a = arr.slice();
+  for (var i = a.length - 1; i > 0; i--) {
+    var j = Math.floor(Math.random() * (i + 1));
+    var tmp = a[i]; a[i] = a[j]; a[j] = tmp;
+  }
+  return a;
+}
+
+window.addEventListener('DOMContentLoaded', initApp);
+</script>
+</body>
+</html>
